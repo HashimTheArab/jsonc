@@ -1,3 +1,5 @@
+> Forked from [muhammadmuzzammil1998/jsonc](https://github.com/muhammadmuzzammil1998/jsonc)
+
 #
 
 ![jsonc](.github/images/jsonc.png)
@@ -22,12 +24,12 @@ JSONC is a superset of JSON which supports comments. JSON formatted files are re
 Run `go get` command to install the package.
 
 ```sh
-$ go get muzzammil.xyz/jsonc
+$ go get github.com/df-mc/jsonc
 ```
 
 ### Import jsonc
 
-Import `muzzammil.xyz/jsonc` to your source file.
+Import `github.com/df-mc/jsonc` to your source file.
 
 ```go
 package main
@@ -35,7 +37,7 @@ package main
 import (
   "fmt"
 
-  "muzzammil.xyz/jsonc"
+  "github.com/df-mc/jsonc"
 )
 ```
 

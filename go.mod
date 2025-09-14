@@ -1,3 +1,3 @@
-module github.com/muhammadmuzzammil1998/jsonc
+module github.com/df-mc/jsonc
 
 go 1.17
