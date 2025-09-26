@@ -50,6 +50,15 @@ func Unmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(j, v)
 }
 
+// UnmarshalLenient parses JSONC (JSON with comments) into v, stripping comments
+// and decoding only the first valid JSON value.
+// This uses a json.NewDecoder which ignores trailing data, it will only read the first valid JSON value.
+// Equivalent of calling `json.NewDecoder(bytes.NewReader(jsonc.ToJSON(data))).Decode(v)`
+func UnmarshalLenient(data []byte, v interface{}) error {
+	j := translate(data)
+	return json.NewDecoder(bytes.NewReader(j)).Decode(v)
+}
+
 // Valid reports whether data is a valid JSONC encoding or not
 func Valid(data []byte) bool {
 	j := translate(data)
