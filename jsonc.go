@@ -23,6 +23,7 @@
 package jsonc
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 )
