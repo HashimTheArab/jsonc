@@ -193,6 +193,89 @@ func TestValid(t *testing.T) {
 	}
 }
 
+func TestTrailingCommas(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      []byte
+		want    []byte
+		invalid bool
+	}{
+		{
+			name: "trailing comma in array",
+			in:   b(`[1, 2, 3,]`),
+			want: b(`[1,2,3]`),
+		},
+		{
+			name: "trailing comma in object",
+			in:   b(`{"a": 1, "b": 2,}`),
+			want: b(`{"a":1,"b":2}`),
+		},
+		{
+			name: "trailing comma after line comment removal",
+			in:   b("[\n  \"a\",\n  // \"b\",\n]"),
+			want: b(`["a"]`),
+		},
+		{
+			name: "trailing comma after block comment removal",
+			in:   b(`[1, /* skipped */ ]`),
+			want: b(`[1]`),
+		},
+		{
+			name: "non-trailing comma before comment is preserved",
+			in:   b(`[1, /* comment */ 2]`),
+			want: b(`[1,2]`),
+		},
+		{
+			name: "trailing comma in nested structures",
+			in:   b(`{"arr": [1, 2,], "obj": {"k": "v",},}`),
+			want: b(`{"arr":[1,2],"obj":{"k":"v"}}`),
+		},
+		{
+			name: "comma followed by whitespace then close",
+			in:   b("[1,\n\t  ]"),
+			want: b(`[1]`),
+		},
+		{
+			name: "no false positives on commas inside strings",
+			in:   b(`["a,]", "b,}"]`),
+			want: b(`["a,]","b,}"]`),
+		},
+		{
+			name: "no false positives on escaped commas in strings",
+			in:   b(`["esc\",", "ok"]`),
+			want: b(`["esc\",","ok"]`),
+		},
+		{
+			name: "non-trailing commas preserved",
+			in:   b(`[1, 2, 3]`),
+			want: b(`[1,2,3]`),
+		},
+		{
+			name: "empty containers untouched",
+			in:   b(`{"a": [], "b": {}}`),
+			want: b(`{"a":[],"b":{}}`),
+		},
+		{
+			name:    "consecutive separators remain invalid",
+			in:      b(`[1,, ,]`),
+			want:    b(`[1,,]`),
+			invalid: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ToJSON(tt.in)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ToJSON(%q) = %q, want %q", s(tt.in), s(got), s(tt.want))
+			}
+			wantValid := !tt.invalid
+			if gotValid := json.Valid(got); gotValid != wantValid {
+				t.Errorf("json.Valid(ToJSON(%q)) = %v, want %v; got %q", s(tt.in), gotValid, wantValid, s(got))
+			}
+		})
+	}
+}
+
 func BenchmarkTranslate(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		translate(jsoncTest.validSingle)

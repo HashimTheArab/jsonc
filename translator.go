@@ -23,27 +23,44 @@
 package jsonc
 
 const (
-	ESCAPE   = 92
-	QUOTE    = 34
-	SPACE    = 32
-	TAB      = 9
-	NEWLINE  = 10
-	ASTERISK = 42
-	SLASH    = 47
-	HASH     = 35
+	ESCAPE        = 92
+	QUOTE         = 34
+	SPACE         = 32
+	TAB           = 9
+	NEWLINE       = 10
+	ASTERISK      = 42
+	SLASH         = 47
+	HASH          = 35
+	COMMA         = 44
+	CLOSE_BRACE   = 125
+	CLOSE_BRACKET = 93
 )
 
+// translate strips JSONC features (// and /* */ comments, # comments,
+// insignificant whitespace) and trailing commas before } or ], producing
+// strict JSON. Commas are deferred when seen outside strings/comments; if the
+// next significant character is } or ], the deferred comma is dropped,
+// otherwise it is emitted before the next character.
 func translate(s []byte) []byte {
 	var (
-		i       int
-		quote   bool
-		escaped bool
+		i            int
+		quote        bool
+		escaped      bool
+		pendingComma bool
 	)
 	j := make([]byte, len(s))
 	comment := &commentData{}
+	flushComma := func() {
+		if pendingComma {
+			j[i] = COMMA
+			i++
+			pendingComma = false
+		}
+	}
 	for _, ch := range s {
 		if ch == ESCAPE || escaped {
 			if !comment.startted {
+				flushComma()
 				j[i] = ch
 				i++
 			}
@@ -63,6 +80,7 @@ func translate(s []byte) []byte {
 			continue
 		}
 		if quote && !comment.startted {
+			flushComma()
 			j[i] = ch
 			i++
 			continue
@@ -91,9 +109,20 @@ func translate(s []byte) []byte {
 			comment.start(ch)
 			continue
 		}
+		if ch == COMMA {
+			flushComma()
+			pendingComma = true
+			continue
+		}
+		if ch == CLOSE_BRACE || ch == CLOSE_BRACKET {
+			pendingComma = false
+		} else {
+			flushComma()
+		}
 		j[i] = ch
 		i++
 	}
+	flushComma()
 	return j[:i]
 }
 
